@@ -13,21 +13,35 @@ public class RiwayatAksi {
     }
 
     public boolean isEmpty() {
-        // TODO
-        return false;
+        return top == -1;
     }
 
     public void push(Aksi a) {
-        // TODO: kalau penuh, perbesar array dulu
+        if (top == data.length - 1) {
+            Aksi[] baru = new Aksi[data.length * 2];
+            for (int i = 0; i <= top; i++) {
+                baru[i] = data[i];
+            }
+            data = baru;
+        }
+        top++;
+        data[top] = a;
     }
 
     public Aksi pop() {
-        // TODO: kalau kosong return null
-        return null;
+        if (isEmpty()) {
+            return null;
+        }
+        Aksi a = data[top];
+        data[top] = null;
+        top--;
+        return a;
     }
 
     public Aksi peek() {
-        // TODO
-        return null;
+        if (isEmpty()) {
+            return null;
+        }
+        return data[top];
     }
 }
