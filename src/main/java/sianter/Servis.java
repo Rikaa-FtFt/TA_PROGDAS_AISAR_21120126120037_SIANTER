@@ -12,7 +12,12 @@ public abstract class Servis {
     protected double biayaJasa;
 
     public Servis(int id, Pelanggan pelanggan, String perangkat, String keluhan, double biayaJasa) {
-        // TODO: isi semua atribut dari parameter, status awal = "Menunggu"
+        this.id = id;
+        this.pelanggan = pelanggan;
+        this.perangkat = perangkat;
+        this.keluhan = keluhan;
+        this.biayaJasa = biayaJasa;
+        this.status = "Menunggu";
     }
 
     // Tiap jenis servis menghitung biayanya sendiri (polymorphism)
@@ -21,6 +26,12 @@ public abstract class Servis {
     // "Hardware" atau "Software", dipakai untuk tampilan tabel
     public abstract String getJenis();
 
-    // TODO: getter untuk id, pelanggan, perangkat, keluhan, status, biayaJasa
-    // TODO: setter untuk status
+    public int getId() { return id; }
+    public Pelanggan getPelanggan() { return pelanggan; }
+    public String getPerangkat() { return perangkat; }
+    public String getKeluhan() { return keluhan; }
+    public String getStatus() { return status; }
+    public double getBiayaJasa() { return biayaJasa; }
+
+    public void setStatus(String status) { this.status = status; }
 }

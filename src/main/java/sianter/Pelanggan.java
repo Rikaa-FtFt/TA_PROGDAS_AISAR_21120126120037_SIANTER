@@ -1,12 +1,17 @@
 package sianter;
 
-// Modul 5 (OOP I): class, atribut private, constructor, getter/setter.
 public class Pelanggan {
+    private String nama;
+    private String noHp;
 
-    // TODO 1: dua atribut private -> nama (String) dan noHp (String)
+    public Pelanggan(String nama, String noHp) {
+        this.nama = nama;
+        this.noHp = noHp;
+    }
 
-    // TODO 2: constructor yang menerima nama dan noHp
+    public String getNama() { return nama; }
+    public void setNama(String nama) { this.nama = nama; }
 
-    // TODO 3: getter dan setter untuk nama dan noHp
-
+    public String getNoHp() { return noHp; }
+    public void setNoHp(String noHp) { this.noHp = noHp; }
 }
