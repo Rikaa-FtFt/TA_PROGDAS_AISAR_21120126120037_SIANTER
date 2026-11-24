@@ -17,8 +17,7 @@ public class Antrean {
     }
 
     public boolean isEmpty() {
-        // TODO
-        return false;
+        return jumlah == 0;
     }
 
     public int size() {
@@ -27,39 +26,74 @@ public class Antrean {
 
     // Pelanggan baru masuk di belakang
     public void enqueue(Servis s) {
-        // TODO: kalau penuh panggil perbesar() dulu, lalu geser belakang secara circular
+        if (jumlah == data.length) {
+            perbesar();
+        }
+        belakang = (belakang + 1) % data.length;
+        data[belakang] = s;
+        jumlah++;
     }
 
     // Pelanggan paling depan dipanggil (keluar dari antrean)
     public Servis dequeue() {
-        // TODO: kalau kosong return null
-        return null;
+        if (isEmpty()) {
+            return null;
+        }
+        Servis s = data[depan];
+        data[depan] = null;
+        depan = (depan + 1) % data.length;
+        jumlah--;
+        return s;
     }
 
     // Lihat yang paling depan tanpa mengeluarkan
     public Servis peek() {
-        // TODO
-        return null;
+        if (isEmpty()) {
+            return null;
+        }
+        return data[depan];
     }
 
     // Ambil elemen ke-i dihitung dari depan (0 = paling depan), untuk ditampilkan di tabel
     public Servis get(int i) {
-        // TODO: index aslinya (depan + i) % data.length
-        return null;
+        if (i < 0 || i >= jumlah) {
+            return null;
+        }
+        return data[(depan + i) % data.length];
     }
 
     // Untuk undo "Panggil": servis dikembalikan ke posisi paling depan
     public void kembalikanKeDepan(Servis s) {
-        // TODO: geser depan mundur satu secara circular
+        if (jumlah == data.length) {
+            perbesar();
+        }
+        depan = (depan - 1 + data.length) % data.length;   // mundur 1, dari 0 balik ke ujung
+        data[depan] = s;
+        if (jumlah == 0) {
+            belakang = depan;   // cuma 1 elemen: depan dan belakang di slot yang sama
+        }
+        jumlah++;
     }
 
     // Untuk undo "Tambah": buang elemen paling belakang
     public Servis hapusBelakang() {
-        // TODO
-        return null;
+        if (isEmpty()) {
+            return null;
+        }
+        Servis s = data[belakang];
+        data[belakang] = null;
+        belakang = (belakang - 1 + data.length) % data.length;
+        jumlah--;
+        return s;
     }
 
     private void perbesar() {
-        // TODO: buat array 2x lebih besar, salin elemen urut dari depan, reset depan = 0
+        Servis[] baru = new Servis[data.length * 2];
+        for (int i = 0; i < jumlah; i++) {
+            baru[i] = get(i);
+        }
+        data = baru;
+        depan = 0;
+        belakang = jumlah - 1;
     }
 }
