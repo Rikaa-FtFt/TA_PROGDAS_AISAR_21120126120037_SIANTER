@@ -6,6 +6,7 @@ import java.util.Locale;
 import javafx.application.Application;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
@@ -15,10 +16,12 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
+import javafx.scene.control.ToggleButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -50,6 +53,23 @@ public class MainApp extends Application {
     private TableView<Servis> tabelRiwayat;
     private Label lblDiproses = new Label();
     private Label lblPesan = new Label();
+    private ToggleButton tglGelap = new ToggleButton("Mode Gelap");
+    private BorderPane root = new BorderPane();
+
+    // Tema bawaan JavaFX (Modena) menghitung semua warna dari beberapa warna dasar ini.
+    // Cukup ganti warna dasarnya, tombol/tabel/teks ikut berubah sendiri.
+    private static final String TEMA_GELAP =
+            "-fx-base: #3a3d41;"                          // warna tombol, header tabel
+            + "-fx-background: #26282b;"                  // latar jendela
+            + "-fx-control-inner-background: #2f3236;"    // isi text field dan tabel
+            + "-fx-control-inner-background-alt: #34373b;" // baris tabel selang-seling
+            + "-fx-accent: #3d7bd9;"                      // baris yang dipilih
+            + "-fx-selection-bar-non-focused: #3b4654;"   // baris dipilih waktu tabel tidak aktif
+            + "-fx-focus-color: #5b9bf0;"                 // garis fokus
+            + "-fx-faint-focus-color: transparent;";
+
+    // Warna teks contoh (prompt) diatur di tiap text field, jadi harus dipasang satu per satu
+    private static final String PROMPT_GELAP = "-fx-prompt-text-fill: #80868f;";
 
     @Override
     public void start(Stage stage) {
@@ -58,12 +78,19 @@ public class MainApp extends Application {
         riwayat = Penyimpanan.muatRiwayat();
         hitungNextId();
 
-        BorderPane root = new BorderPane();
+        tglGelap.setOnAction(e -> aturTema());
+
+        // Baris bawah: pesan di kiri, tombol mode gelap di kanan
+        Region pengisi = new Region();
+        HBox.setHgrow(pengisi, Priority.ALWAYS);
+        HBox barisBawah = new HBox(8, lblPesan, pengisi, tglGelap);
+        barisBawah.setAlignment(Pos.CENTER_LEFT);
+
         root.setPadding(new Insets(12));
         root.setLeft(buatForm());
         root.setCenter(buatPanelKanan());
-        root.setBottom(lblPesan);
-        BorderPane.setMargin(lblPesan, new Insets(8, 0, 0, 0));
+        root.setBottom(barisBawah);
+        BorderPane.setMargin(barisBawah, new Insets(8, 0, 0, 0));
 
         refresh();
         pesan("Siap. Ada " + antrean.size() + " servis di antrean.");
@@ -360,6 +387,23 @@ public class MainApp extends Application {
         tfSparepart.clear();
         chkInstalUlang.setSelected(false);
         tfNama.requestFocus();
+    }
+
+    // Tombol Mode Gelap ditekan: pasang atau lepas warna tema gelap
+    private void aturTema() {
+        TextField[] semuaField = {tfNama, tfNoHp, tfPerangkat, tfKeluhan, tfBiayaJasa, tfSparepart};
+
+        if (tglGelap.isSelected()) {
+            root.setStyle(TEMA_GELAP);
+            for (int i = 0; i < semuaField.length; i++) {
+                semuaField[i].setStyle(PROMPT_GELAP);
+            }
+        } else {
+            root.setStyle("");
+            for (int i = 0; i < semuaField.length; i++) {
+                semuaField[i].setStyle("");
+            }
+        }
     }
 
     private void pesan(String teks) {
