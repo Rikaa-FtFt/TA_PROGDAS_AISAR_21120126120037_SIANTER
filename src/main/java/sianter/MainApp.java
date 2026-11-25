@@ -76,6 +76,12 @@ public class MainApp extends Application {
         // Muat data lama dari file CSV (kalau ada)
         antrean = Penyimpanan.muatAntrean();
         riwayat = Penyimpanan.muatRiwayat();
+
+        // Servis yang sedang dikerjakan disimpan di baris pertama file antrean dengan
+        // status "Diproses". Kalau ada, keluarkan lagi dari antrean dan taruh di slot.
+        if (!antrean.isEmpty() && antrean.peek().getStatus().equals("Diproses")) {
+            sedangDiproses = antrean.dequeue();
+        }
         hitungNextId();
 
         tglGelap.setOnAction(e -> aturTema());
@@ -100,10 +106,16 @@ public class MainApp extends Application {
         stage.show();
     }
 
-    // Dipanggil otomatis oleh JavaFX waktu jendela ditutup: simpan data ke CSV
+    // Dipanggil otomatis oleh JavaFX waktu jendela ditutup
     @Override
     public void stop() {
-        Penyimpanan.simpanAntrean(antrean);
+        simpanSemua();
+    }
+
+    // Data disimpan setiap kali berubah, bukan cuma waktu ditutup,
+    // supaya tidak hilang kalau program dimatikan paksa
+    private void simpanSemua() {
+        Penyimpanan.simpanAntrean(antrean, sedangDiproses);
         Penyimpanan.simpanRiwayat(riwayat);
     }
 
@@ -123,6 +135,14 @@ public class MainApp extends Application {
         pasangFormatRibuan(tfBiayaJasa);
         pasangFormatRibuan(tfSparepart);
 
+        // No HP cuma boleh angka, maksimal 13 digit. Ketikan lain ditolak (return null).
+        tfNoHp.setTextFormatter(new TextFormatter<String>(perubahan -> {
+            if (perubahan.getControlNewText().matches("[0-9]{0,13}")) {
+                return perubahan;
+            }
+            return null;
+        }));
+
         GridPane grid = new GridPane();
         grid.setHgap(8);
         grid.setVgap(8);
@@ -138,6 +158,7 @@ public class MainApp extends Application {
         Button btnTambah = new Button("Tambah ke Antrean");
         btnTambah.setMaxWidth(Double.MAX_VALUE);
         btnTambah.setOnAction(e -> tambah());
+        btnTambah.setDefaultButton(true);   // tekan Enter = klik Tambah
 
         Label judul = new Label("Servis Baru");
         judul.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
@@ -264,6 +285,10 @@ public class MainApp extends Application {
             pesan("Nama, No HP, perangkat, dan keluhan wajib diisi.");
             return;
         }
+        if (noHp.length() < 10) {
+            pesan("No HP minimal 10 digit.");
+            return;
+        }
 
         // Field biaya cuma bisa diisi angka (lihat pasangFormatRibuan), jadi tinggal cek kosong
         if (tfBiayaJasa.getText().isEmpty()) {
@@ -290,6 +315,7 @@ public class MainApp extends Application {
         riwayatAksi.push(new Aksi(Aksi.TAMBAH, s));
 
         kosongkanForm();
+        simpanSemua();
         refresh();
         pesan("Servis #" + s.getId() + " (" + nama + ") masuk antrean.");
     }
@@ -308,6 +334,7 @@ public class MainApp extends Application {
         sedangDiproses.setStatus("Diproses");
         riwayatAksi.push(new Aksi(Aksi.PANGGIL, sedangDiproses));
 
+        simpanSemua();
         refresh();
         pesan("Servis #" + sedangDiproses.getId() + " dipanggil dan mulai dikerjakan.");
     }
@@ -324,6 +351,7 @@ public class MainApp extends Application {
         riwayatAksi.push(new Aksi(Aksi.SELESAI, s));
         sedangDiproses = null;
 
+        simpanSemua();
         refresh();
         pesan("Servis #" + s.getId() + " selesai. Total biaya " + rupiah(s.hitungBiaya()) + ".");
     }
@@ -357,6 +385,7 @@ public class MainApp extends Application {
             pesan("Undo selesai: servis #" + s.getId() + " kembali diproses.");
         }
 
+        simpanSemua();
         refresh();
     }
 
@@ -365,6 +394,9 @@ public class MainApp extends Application {
     // Cari id terbesar dari data yang dimuat, supaya id baru tidak dobel
     private void hitungNextId() {
         int max = 0;
+        if (sedangDiproses != null) {
+            max = sedangDiproses.getId();
+        }
         for (int i = 0; i < antrean.size(); i++) {
             if (antrean.get(i).getId() > max) {
                 max = antrean.get(i).getId();
