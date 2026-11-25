@@ -1,6 +1,7 @@
 package sianter;
 
 import java.util.ArrayList;
+import java.util.Locale;
 
 import javafx.application.Application;
 import javafx.beans.property.SimpleStringProperty;
@@ -13,6 +14,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextFormatter;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -89,8 +91,10 @@ public class MainApp extends Application {
         tfNoHp.setPromptText("08123456789");
         tfPerangkat.setPromptText("Laptop Asus A409");
         tfKeluhan.setPromptText("Tidak mau menyala");
-        tfBiayaJasa.setPromptText("100000");
+        tfBiayaJasa.setPromptText("100.000");
         tfSparepart.setPromptText("0");
+        pasangFormatRibuan(tfBiayaJasa);
+        pasangFormatRibuan(tfSparepart);
 
         GridPane grid = new GridPane();
         grid.setHgap(8);
@@ -234,22 +238,16 @@ public class MainApp extends Application {
             return;
         }
 
-        double biayaJasa;
-        double biayaSparepart = 0;
-        try {
-            biayaJasa = Double.parseDouble(tfBiayaJasa.getText().trim());
-            String teksSparepart = tfSparepart.getText().trim();
-            if (cbJenis.getValue().equals("Hardware") && !teksSparepart.isEmpty()) {
-                biayaSparepart = Double.parseDouble(teksSparepart);
-            }
-        } catch (NumberFormatException e) {
-            pesan("Biaya harus berupa angka, contoh: 100000");
+        // Field biaya cuma bisa diisi angka (lihat pasangFormatRibuan), jadi tinggal cek kosong
+        if (tfBiayaJasa.getText().isEmpty()) {
+            pesan("Biaya jasa wajib diisi.");
             return;
         }
 
-        if (biayaJasa < 0 || biayaSparepart < 0) {
-            pesan("Biaya tidak boleh negatif.");
-            return;
+        double biayaJasa = ambilAngka(tfBiayaJasa);
+        double biayaSparepart = 0;
+        if (cbJenis.getValue().equals("Hardware") && !tfSparepart.getText().isEmpty()) {
+            biayaSparepart = ambilAngka(tfSparepart);
         }
 
         Pelanggan p = new Pelanggan(nama, noHp);
@@ -368,7 +366,40 @@ public class MainApp extends Application {
         lblPesan.setText(teks);
     }
 
+    // 900000 -> "900.000". Locale Indonesia supaya pemisahnya titik di laptop mana pun.
+    private String ribuan(long angka) {
+        return String.format(Locale.forLanguageTag("id-ID"), "%,d", angka);
+    }
+
     private String rupiah(double angka) {
-        return String.format("Rp %,.0f", angka);
+        return "Rp " + ribuan(Math.round(angka));
+    }
+
+    // "900.000" -> 900000.0 (titiknya dibuang dulu baru diubah jadi angka)
+    private double ambilAngka(TextField tf) {
+        return Double.parseDouble(tf.getText().replace(".", ""));
+    }
+
+    // Setiap isi field berubah, ambil digitnya saja lalu tulis ulang dengan titik ribuan.
+    // Huruf dan tanda minus otomatis terbuang, jadi biaya pasti angka dan tidak negatif.
+    private void pasangFormatRibuan(TextField tf) {
+        tf.setTextFormatter(new TextFormatter<String>(perubahan -> {
+            if (!perubahan.isContentChange()) {
+                return perubahan;   // cuma geser kursor / blok teks, biarkan
+            }
+            String digit = perubahan.getControlNewText().replaceAll("[^0-9]", "");
+            if (digit.length() > 12) {
+                return null;   // tolak ketikan, maksimal 999.999.999.999
+            }
+            String rapi = "";
+            if (!digit.isEmpty()) {
+                rapi = ribuan(Long.parseLong(digit));
+            }
+            perubahan.setRange(0, perubahan.getControlText().length());
+            perubahan.setText(rapi);
+            perubahan.setCaretPosition(rapi.length());
+            perubahan.setAnchor(rapi.length());
+            return perubahan;
+        }));
     }
 }
